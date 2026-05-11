@@ -92,19 +92,6 @@ resource "aws_iam_role_policy_attachment" "lambda_cloudwatch_logs_full" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
 }
 
-# 4. Archive and define the Lambda Layer
-data "archive_file" "lambda_layer" {
-  type        = "zip"
-  source_dir = "${path.module}/../pythonLayer"
-  output_path = "${path.module}/../infra/pythonLayer.zip"
-}
-
-resource "aws_lambda_layer_version" "lambda_layer" {
-  filename   = data.archive_file.lambda_layer.output_path
-  layer_name = "python-deps-layer"
-  compatible_runtimes = ["python3.11"]
-}
-
 # 4. Define the Lambda Function
 resource "aws_lambda_function" "questLambdaTF" {
   filename      = data.archive_file.lambda_zip.output_path
@@ -115,10 +102,6 @@ resource "aws_lambda_function" "questLambdaTF" {
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   runtime = "python3.11"
-
-  layers = [
-    aws_lambda_layer_version.lambda_layer.arn
-  ]
 
   environment {
     variables = {
@@ -142,10 +125,6 @@ resource "aws_lambda_function" "questLambdaReportTF" {
   source_code_hash = data.archive_file.lambda_report_zip.output_base64sha256
 
   runtime = "python3.11"
-
-  layers = [
-    aws_lambda_layer_version.lambda_layer.arn
-  ]
 
   environment {
     variables = {
@@ -315,5 +294,3 @@ resource "aws_iam_role_policy" "lambda_quest_queue_consume" {
     ]
   })
 }
-
-
