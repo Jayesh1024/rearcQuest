@@ -2,19 +2,7 @@ from datetime import datetime
 import requests
 import re
 import json
-import os
-import boto3, dotenv
-
-dotenv.load_dotenv(override=True)
-
-s3 = boto3.client('s3',
-    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-    region_name=os.getenv('AWS_REGION')
-)
-
-bucket = os.getenv('AWS_BUCKET')
-
+import boto3
 
 headers = {
     "Accept-Language": "en-US,en;q=0.9",
@@ -37,7 +25,7 @@ def list_files(url:str, headers:dict) -> list[tuple[str, str]]:
         raise Exception(f"Failed to get files from {url}, with status code {response.status_code}")
 
 
-def sync_files(files:list[tuple[str, str]], metadata_fp:str) -> None:
+def sync_files(files:list[tuple[str, str]], metadata_fp:str, s3:boto3.client, bucket:str) -> None:
     metadata_incoming:list[dict[str,str]] = []
     incoming:set[str] = set()
     # --- Handle inserts and updates ---
@@ -74,7 +62,3 @@ def sync_files(files:list[tuple[str, str]], metadata_fp:str) -> None:
 
     s3.put_object(Bucket=bucket, Key=metadata_fp, Body=json.dumps(metadata_incoming, indent=4).encode('utf-8'))
 
-
-full_url = base + path
-files = list_files(full_url, headers)
-sync_files(files, 'config/metadata.json')
