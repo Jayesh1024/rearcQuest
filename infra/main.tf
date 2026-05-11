@@ -105,7 +105,6 @@ resource "aws_lambda_function" "questLambdaTF" {
 
   environment {
     variables = {
-      AWS_REGION = var.aws_region
       AWS_BUCKET = var.aws_bucket
     }
   }
@@ -129,7 +128,6 @@ resource "aws_lambda_function" "questLambdaReportTF" {
 
   environment {
     variables = {
-      AWS_REGION = var.aws_region
       AWS_BUCKET = var.aws_bucket
     }
   }
