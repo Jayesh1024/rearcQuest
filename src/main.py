@@ -22,6 +22,5 @@ def handler(event:dict, context:dict) -> None:
     }
 
 
-handler({}, {})
 
 

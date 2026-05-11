@@ -2,7 +2,7 @@ import pandas as pd
 import boto3, os
 import json, io
 
-def handle(event=None, context=None):
+def handler(event=None, context=None):
     s3 = boto3.client('s3',
         region_name=os.getenv('AWS_REGION')
     )
