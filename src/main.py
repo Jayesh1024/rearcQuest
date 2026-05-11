@@ -15,11 +15,13 @@ def handler(event:dict, context:dict) -> None:
     # --- Extract the CSV data ---
     full_url = base + path
     files = list_files(full_url, headers)
-    sync_files(files, 'config/metadata.json')
+    sync_files(files, 'config/metadata.json', s3, bucket)
 
     return {
         'statusCode': 200
     }
+
+
 
 
 

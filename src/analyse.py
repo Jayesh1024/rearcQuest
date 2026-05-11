@@ -69,3 +69,7 @@ def handler(event=None, context=None):
     cols_to_keep = ['series_id', 'year', 'period', 'value', 'Population']
 
     print(df_merged[cols_to_keep])
+
+    return {
+        'statusCode': 200
+    }

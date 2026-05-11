@@ -93,6 +93,16 @@ resource "aws_iam_role_policy_attachment" "lambda_cloudwatch_logs_full" {
 }
 
 # 4. Define the Lambda Function
+
+# Add the AWS Data Wrangler (awswrangler) pandas layer for Python 3.11 (awssdkpandas)
+# Official ARN for us-east-1 as of May 2024:
+# arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python311:1
+# You may have to adjust the region identifier accordingly.
+
+locals {
+  awssdkpandas_layer_arn = "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python311:1"
+}
+
 resource "aws_lambda_function" "questLambdaTF" {
   filename      = data.archive_file.lambda_zip.output_path
   function_name = "questLambda"
@@ -103,11 +113,17 @@ resource "aws_lambda_function" "questLambdaTF" {
 
   runtime = "python3.11"
 
+  timeout = 60
+
   environment {
     variables = {
       AWS_BUCKET = var.aws_bucket
     }
   }
+
+  layers = [
+    local.awssdkpandas_layer_arn
+  ]
 
   tags = {
     project = "rearc"
@@ -126,11 +142,17 @@ resource "aws_lambda_function" "questLambdaReportTF" {
 
   runtime = "python3.11"
 
+  timeout = 60
+
   environment {
     variables = {
       AWS_BUCKET = var.aws_bucket
     }
   }
+
+  layers = [
+    local.awssdkpandas_layer_arn
+  ]
 
   tags = {
     project = "rearc"
