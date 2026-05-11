@@ -23,6 +23,12 @@ variable "aws_bucket" {
   default     = "rearc-quest-bucket-aws"
 }
 
+variable "ingestion_schedule_expression" {
+  type        = string
+  description = "EventBridge Scheduler cron/rate expression for questLambda. Uses scheduler syntax: rate(1 days) or cron(0 0 * * ? *)."
+  default     = "cron(0 8 * * ? *)"
+}
+
 variable "s3_notification_object_key_prefix" {
   type        = string
   description = <<-EOT
@@ -213,6 +219,62 @@ resource "aws_sqs_queue_policy" "questQueue_policy" {
   })
 }
 
+# EventBridge Scheduler — daily trigger for questLambda
+resource "aws_iam_role" "scheduler_role" {
+  name = "questSchedulerRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = "sts:AssumeRole"
+        Principal = {
+          Service = "scheduler.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "scheduler_invoke_lambda" {
+  name = "questSchedulerInvokeLambda"
+  role = aws_iam_role.scheduler_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "lambda:InvokeFunction"
+        Resource = aws_lambda_function.questLambdaTF.arn
+      }
+    ]
+  })
+}
+
+resource "aws_scheduler_schedule" "questLambda_daily" {
+  name                         = "questLambda-daily"
+  schedule_expression          = var.ingestion_schedule_expression
+  schedule_expression_timezone = "Asia/Kolkata"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  target {
+    arn      = aws_lambda_function.questLambdaTF.arn
+    role_arn = aws_iam_role.scheduler_role.arn
+  }
+}
+
+resource "aws_lambda_event_source_mapping" "sqs_to_questLambdaReport" {
+  event_source_arn = aws_sqs_queue.questQueue.arn
+  function_name    = aws_lambda_function.questLambdaReportTF.arn
+  batch_size       = 1
+  enabled          = true
+}
+
 resource "aws_iam_role_policy" "lambda_quest_queue_consume" {
   name = "questQueueConsume"
   role = aws_iam_role.iam_for_lambda.id
@@ -234,3 +296,5 @@ resource "aws_iam_role_policy" "lambda_quest_queue_consume" {
     ]
   })
 }
+
+
