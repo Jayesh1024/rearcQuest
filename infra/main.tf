@@ -17,6 +17,12 @@ variable "aws_region" {
   default     = "ap-south-1"
 }
 
+variable "aws_bucket" {
+  type        = string
+  description = "S3 bucket name passed to Lambda functions as AWS_BUCKET."
+  default     = "rearc-quest-bucket-aws"
+}
+
 variable "s3_notification_object_key_prefix" {
   type        = string
   description = <<-EOT
@@ -91,11 +97,17 @@ resource "aws_lambda_function" "questLambdaTF" {
 
   runtime = "python3.11"
 
-  tags = {
-    project = "rearc"
-    type = "quest"
+  environment {
+    variables = {
+      AWS_REGION = var.aws_region
+      AWS_BUCKET = var.aws_bucket
+    }
   }
 
+  tags = {
+    project = "rearc"
+    type    = "quest"
+  }
 }
 
 # Define the Lambda Function for the report
@@ -109,9 +121,16 @@ resource "aws_lambda_function" "questLambdaReportTF" {
 
   runtime = "python3.11"
 
+  environment {
+    variables = {
+      AWS_REGION = var.aws_region
+      AWS_BUCKET = var.aws_bucket
+    }
+  }
+
   tags = {
     project = "rearc"
-    type = "quest"
+    type    = "quest"
   }
 }
 
